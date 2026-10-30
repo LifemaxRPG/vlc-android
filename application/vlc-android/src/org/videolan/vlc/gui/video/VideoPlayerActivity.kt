@@ -762,7 +762,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                     if (isFinishing || isDestroyed) return@launch
                     if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
                         playbackStarted && service?.vout?.areViewsAttached() == true &&
-                        service?.videoTracksCount ?: 0 > 0) {
+                        (service?.videoTracksCount ?: 0) > 0) {
                         if (Permissions.isPiPAllowed(this@VideoPlayerActivity)) {
                             try {
                                 val builder = PictureInPictureParams.Builder()
