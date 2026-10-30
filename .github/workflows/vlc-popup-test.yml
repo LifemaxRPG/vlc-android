@@ -35,6 +35,11 @@ jobs:
       - name: Configure Android SDK
         run: |
           printf 'sdk.dir=%s\nandroid.ndkFullVersion=21.4.7075529\n' "$ANDROID_HOME" > local.properties
+      - name: Prepare optional native library project directory
+        run: |
+          # Upstream does not commit the generated libvlcjni/libvlc project.
+          # Debug builds resolve the prebuilt LibVLC artifact instead.
+          mkdir -p libvlcjni/libvlc
       - name: Build debug APK
         run: gradle :application:app:assembleDebug --stacktrace --no-daemon
       - name: Upload test APK
