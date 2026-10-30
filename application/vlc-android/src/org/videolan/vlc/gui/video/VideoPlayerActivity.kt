@@ -869,7 +869,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     }
 
     @TargetApi(Build.VERSION_CODES.O)
-    fun switchToPopup() {
+    fun switchToPopup(forceFloating: Boolean = false) {
         if (isBenchmark) return
         optionsDelegate?.hide()
         //look for dialogs and close them
@@ -878,7 +878,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         if (mw == null || !AndroidDevices.pipAllowed || !isStarted()) return
 
         val forceLegacy = Settings.getInstance(this).getBoolean(POPUP_FORCE_LEGACY, false)
-        if (AndroidDevices.hasPiP && !forceLegacy) {
+        if (AndroidDevices.hasPiP && !forceLegacy && !forceFloating) {
             Permissions.checkPiPPermission(this)
             if (AndroidUtil.isOOrLater)
                 try {
