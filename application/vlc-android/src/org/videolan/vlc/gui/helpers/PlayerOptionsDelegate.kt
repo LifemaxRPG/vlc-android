@@ -84,6 +84,7 @@ private const val ID_SAFE_MODE_LOCK = 21L
 private const val ID_SAFE_MODE_UNLOCK = 22L
 private const val ID_SHARE = 23L
 private const val ID_NATIVE_PIP = 24L
+private const val ID_FLOATING_FROM_VIDEO = 25L
 @SuppressLint("ShowToast")
 class PlayerOptionsDelegate(val activity: FragmentActivity, val service: PlaybackService, private val showABReapeat:Boolean = true)  {
 
@@ -115,8 +116,11 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
         if (video) {
             if (primary && !Settings.showTvUi && service.audioTracksCount > 0)
                 options.add(PlayerOption(ID_PLAY_AS_AUDIO, R.drawable.ic_playasaudio_on, res.getString(R.string.play_as_audio)))
-            if (primary && AndroidDevices.pipAllowed && !AndroidDevices.isDex(activity))
-                options.add(PlayerOption(ID_POPUP_VIDEO, R.drawable.ic_popup_dim, res.getString(R.string.ctx_pip_title)))
+            if (primary && AndroidDevices.pipAllowed && !AndroidDevices.isDex(activity)) {
+                options.add(PlayerOption(ID_POPUP_VIDEO, R.drawable.ic_popup_dim, "Open in native PiP"))
+                if (!PlaybackService.hasRenderer())
+                    options.add(PlayerOption(ID_FLOATING_FROM_VIDEO, R.drawable.ic_popup_dim, "Open in floating player"))
+            }
             if (primary)
                 options.add(PlayerOption(ID_REPEAT, R.drawable.ic_repeat, res.getString(R.string.repeat_title)))
             if (service.canShuffle()) options.add(PlayerOption(ID_SHUFFLE, R.drawable.ic_player_shuffle, res.getString(R.string.shuffle_title)))
@@ -235,6 +239,10 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
                 val intent = VideoPlayerActivity.getIntent(activity, media.uri, media.title, false, index)
                 intent.putExtra(VideoPlayerActivity.EXTRA_START_NATIVE_PIP, true)
                 activity.startActivity(intent)
+            }
+            ID_FLOATING_FROM_VIDEO -> {
+                (activity as? VideoPlayerActivity)?.switchToPopup(forceFloating = true)
+                hide()
             }
             ID_POPUP_VIDEO -> {
                 if (video) {
