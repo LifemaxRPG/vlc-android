@@ -753,6 +753,39 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
          * Set listeners here to avoid NPE when activity is closing
          */
         overlayDelegate.setListeners(true)
+        if (intent.getBooleanExtra(EXTRA_START_NATIVE_PIP, false)) {
+            intent.removeExtra(EXTRA_START_NATIVE_PIP)
+            lifecycleScope.launch {
+                // Audio playback may already be running: wait for the video Activity
+                // to attach its surface rather than waiting for a new Playing event.
+                repeat(30) {
+                    if (isFinishing || isDestroyed) return@launch
+                    if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                        playbackStarted && service?.vout?.areViewsAttached() == true &&
+                        service?.videoTracksCount ?: 0 > 0) {
+                        if (Permissions.isPiPAllowed(this@VideoPlayerActivity)) {
+                            try {
+                                val builder = PictureInPictureParams.Builder()
+                                val track = service?.playlistManager?.player?.mediaplayer?.getSelectedVideoTrack()
+                                if (track != null && track.getWidth() > 0 && track.getHeight() > 0) {
+                                    val ratio = track.getWidth().toFloat() / track.getHeight()
+                                    if (ratio in 0.418410f..2.39f)
+                                        builder.setAspectRatio(Rational(track.getWidth(), track.getHeight()))
+                                }
+                                enterPictureInPictureMode(builder.build())
+                            } catch (e: IllegalStateException) {
+                                Log.w(TAG, "Native PiP transition was rejected", e)
+                            } catch (e: IllegalArgumentException) {
+                                Log.w(TAG, "Invalid native PiP parameters", e)
+                            }
+                        }
+                        return@launch
+                    }
+                    kotlinx.coroutines.delay(200)
+                }
+                Log.w(TAG, "Native PiP timed out waiting for video surface")
+            }
+        }
 
         if (isLocked && !orientationMode.locked) requestedOrientation = orientationMode.orientation
         overlayDelegate.updateOrientationIcon()
@@ -2571,6 +2604,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     companion object {
 
         private const val TAG = "VLC/VideoPlayerActivity"
+        const val EXTRA_START_NATIVE_PIP = "org.videolan.vlc.extra.START_NATIVE_PIP"
 
         private val ACTION_RESULT = "player.result".buildPkgString()
         private const val EXTRA_POSITION = "extra_position"
