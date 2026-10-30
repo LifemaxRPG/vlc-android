@@ -48,6 +48,7 @@ import org.videolan.vlc.gui.helpers.UiTools.addToPlaylist
 import org.videolan.vlc.gui.helpers.hf.PinCodeDelegate
 import org.videolan.vlc.gui.helpers.hf.checkPIN
 import org.videolan.vlc.gui.video.VideoPlayerActivity
+import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.vlc.media.PlayerController
 import org.videolan.vlc.util.Permissions
 import org.videolan.vlc.util.TextUtils
@@ -82,6 +83,7 @@ private const val ID_AUDIO_CONTROL_SETTING = 20L
 private const val ID_SAFE_MODE_LOCK = 21L
 private const val ID_SAFE_MODE_UNLOCK = 22L
 private const val ID_SHARE = 23L
+private const val ID_NATIVE_PIP = 24L
 @SuppressLint("ShowToast")
 class PlayerOptionsDelegate(val activity: FragmentActivity, val service: PlaybackService, private val showABReapeat:Boolean = true)  {
 
@@ -121,8 +123,11 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
             options.add(PlayerOption(ID_VIDEO_STATS, R.drawable.ic_video_stats, res.getString(R.string.video_information)))
         } else {
             if (service.videoTracksCount > 0) options.add(PlayerOption(ID_PLAY_AS_VIDEO, R.drawable.ic_playasaudio_off, res.getString(R.string.play_as_video)))
-            if (service.videoTracksCount > 0 && AndroidDevices.pipAllowed && !AndroidDevices.isDex(activity) && !PlaybackService.hasRenderer())
-                options.add(PlayerOption(ID_POPUP_VIDEO, R.drawable.ic_popup_dim, res.getString(R.string.ctx_pip_title)))
+            if (service.videoTracksCount > 0 && AndroidDevices.pipAllowed && !AndroidDevices.isDex(activity) && !PlaybackService.hasRenderer()) {
+                options.add(PlayerOption(ID_POPUP_VIDEO, R.drawable.ic_popup_dim, "Open in floating player"))
+                if (AndroidDevices.hasPiP && AndroidUtil.isOOrLater)
+                    options.add(PlayerOption(ID_NATIVE_PIP, R.drawable.ic_popup_dim, "Open in native PiP"))
+            }
         }
         val chaptersCount = service.getChapters(-1)?.size ?: 0
         if (chaptersCount > 1) options.add(PlayerOption(ID_CHAPTER_TITLE, R.drawable.ic_chapter, res.getString(R.string.go_to_chapter)))
@@ -214,6 +219,22 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
                 when {
                     activity is PlayerOptionsDelegateCallback -> activity.onResumeToVideoClick()
                 }
+            }
+            ID_NATIVE_PIP -> {
+                val media = service.currentMediaWrapper ?: return
+                if (!AndroidDevices.hasPiP || !AndroidUtil.isOOrLater || PlaybackService.hasRenderer()) return
+                if (!Permissions.isPiPAllowed(activity)) {
+                    Permissions.checkPiPPermission(activity)
+                    hide()
+                    return
+                }
+                val index = service.playlistManager.currentIndex
+                if (index < 0) return
+                media.removeFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
+                hide()
+                val intent = VideoPlayerActivity.getIntent(activity, media.uri, media.title, false, index)
+                intent.putExtra(VideoPlayerActivity.EXTRA_START_NATIVE_PIP, true)
+                activity.startActivity(intent)
             }
             ID_POPUP_VIDEO -> {
                 if (video) {
