@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.resources.AndroidDevices
 import org.videolan.resources.VLCOptions
 import org.videolan.tools.AppScope
@@ -119,6 +120,8 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
             options.add(PlayerOption(ID_VIDEO_STATS, R.drawable.ic_video_stats, res.getString(R.string.video_information)))
         } else {
             if (service.videoTracksCount > 0) options.add(PlayerOption(ID_PLAY_AS_VIDEO, R.drawable.ic_playasaudio_off, res.getString(R.string.play_as_video)))
+            if (service.videoTracksCount > 0 && AndroidDevices.pipAllowed && !AndroidDevices.isDex(activity) && !PlaybackService.hasRenderer())
+                options.add(PlayerOption(ID_POPUP_VIDEO, R.drawable.ic_popup_dim, res.getString(R.string.ctx_pip_title)))
         }
         val chaptersCount = service.getChapters(-1)?.size ?: 0
         if (chaptersCount > 1) options.add(PlayerOption(ID_CHAPTER_TITLE, R.drawable.ic_chapter, res.getString(R.string.go_to_chapter)))
@@ -212,7 +215,13 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
                 }
             }
             ID_POPUP_VIDEO -> {
-                (activity as VideoPlayerActivity).switchToPopup()
+                if (video) {
+                    (activity as VideoPlayerActivity).switchToPopup()
+                } else {
+                    // Clear audio-only mode before attaching the existing popup video surface.
+                    service.currentMediaWrapper?.removeFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
+                    service.switchToPopup(service.playlistManager.currentIndex)
+                }
                 val startMain = Intent(Intent.ACTION_MAIN)
                 startMain.addCategory(Intent.CATEGORY_HOME)
                 startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
