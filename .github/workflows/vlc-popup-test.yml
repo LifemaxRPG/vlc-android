@@ -21,6 +21,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.4.0'
       - name: Locate Android SDK on runner
         run: |
           echo "ANDROID_HOME=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" >> "$GITHUB_ENV"
@@ -32,9 +35,8 @@ jobs:
       - name: Configure Android SDK
         run: |
           printf 'sdk.dir=%s\nandroid.ndkFullVersion=21.4.7075529\n' "$ANDROID_HOME" > local.properties
-          chmod +x ./gradlew
       - name: Build debug APK
-        run: ./gradlew :application:app:assembleDebug --stacktrace --no-daemon
+        run: gradle :application:app:assembleDebug --stacktrace --no-daemon
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
