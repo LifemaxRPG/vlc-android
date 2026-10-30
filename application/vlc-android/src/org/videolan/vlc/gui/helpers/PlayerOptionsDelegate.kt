@@ -49,6 +49,7 @@ import org.videolan.vlc.gui.helpers.hf.PinCodeDelegate
 import org.videolan.vlc.gui.helpers.hf.checkPIN
 import org.videolan.vlc.gui.video.VideoPlayerActivity
 import org.videolan.vlc.media.PlayerController
+import org.videolan.vlc.util.Permissions
 import org.videolan.vlc.util.TextUtils
 import org.videolan.vlc.util.getScreenHeight
 import org.videolan.vlc.util.isTalkbackIsEnabled
@@ -218,9 +219,18 @@ class PlayerOptionsDelegate(val activity: FragmentActivity, val service: Playbac
                 if (video) {
                     (activity as VideoPlayerActivity).switchToPopup()
                 } else {
-                    // Clear audio-only mode before attaching the existing popup video surface.
-                    service.currentMediaWrapper?.removeFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
-                    service.switchToPopup(service.playlistManager.currentIndex)
+                    // The audio player has no Activity PiP surface; use VLC's overlay popup.
+                    // Request permission before touching playback state or the WindowManager.
+                    if (Permissions.checkDrawOverlaysPermission(activity)) {
+                        hide()
+                        return
+                    }
+                    val media = service.currentMediaWrapper ?: return
+                    val index = service.playlistManager.currentIndex
+                    if (index < 0) return
+                    // The popup's surface callback re-enables the video track.
+                    media.removeFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
+                    service.switchToPopup(index)
                 }
                 val startMain = Intent(Intent.ACTION_MAIN)
                 startMain.addCategory(Intent.CATEGORY_HOME)
