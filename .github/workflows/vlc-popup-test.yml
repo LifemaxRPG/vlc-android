@@ -41,8 +41,36 @@ jobs:
           # Upstream does not commit the generated libvlcjni/libvlc project.
           # Debug builds resolve the prebuilt LibVLC artifact instead.
           mkdir -p libvlcjni/libvlc
-      - name: Build debug APK
-        run: gradle :application:app:assembleDebug --stacktrace --no-daemon
+      - name: Verify persistent signing secrets
+        env:
+          VLC_KEYSTORE_B64: ${{ secrets.VLC_KEYSTORE_B64 }}
+          VLC_KEYSTORE_PASSWORD: ${{ secrets.VLC_KEYSTORE_PASSWORD }}
+          VLC_KEY_ALIAS: ${{ secrets.VLC_KEY_ALIAS }}
+        run: |
+          test -n "$VLC_KEYSTORE_B64" || { echo "::error::Missing VLC_KEYSTORE_B64 secret"; exit 1; }
+          test -n "$VLC_KEYSTORE_PASSWORD" || { echo "::error::Missing VLC_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$VLC_KEY_ALIAS" || { echo "::error::Missing VLC_KEY_ALIAS secret"; exit 1; }
+      - name: Restore signing keystore
+        env:
+          VLC_KEYSTORE_B64: ${{ secrets.VLC_KEYSTORE_B64 }}
+        run: |
+          printf '%s' "$VLC_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/vlc-signing.jks"
+          chmod 600 "$RUNNER_TEMP/vlc-signing.jks"
+      - name: Build signed updateable APK
+        env:
+          PASSWORD_KEYSTORE: ${{ secrets.VLC_KEYSTORE_PASSWORD }}
+          VLC_CI_KEYSTORE_PATH: ${{ runner.temp }}/vlc-signing.jks
+          VLC_CI_VERSION_CODE: ${{ github.run_number }}
+          VLC_KEY_ALIAS: ${{ secrets.VLC_KEY_ALIAS }}
+        run: |
+          # Base code is larger than the previous 3070200 build.
+          export VLC_CI_VERSION_CODE=$((3070200 + VLC_CI_VERSION_CODE))
+          gradle :application:app:assembleDebug --stacktrace --no-daemon \
+            -PkeyStoreFile="$VLC_CI_KEYSTORE_PATH" \
+            -Pstorealias="$VLC_KEY_ALIAS"
+      - name: Remove signing keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/vlc-signing.jks"
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
