@@ -147,6 +147,7 @@ class VideosViewModel(context: Context, type: VideoGroupingType, val folder: Fol
             }
         } else {
             if (fromStart) mw.addFlags(MediaWrapper.MEDIA_FROM_START)
+            else mw.removeFlags(MediaWrapper.MEDIA_FROM_START)
             MediaUtils.openMedia(context, mw)
         }
     }
