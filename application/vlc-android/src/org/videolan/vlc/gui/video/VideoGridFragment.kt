@@ -141,6 +141,7 @@ import org.videolan.vlc.util.ContextOption.CTX_PLAY
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_ALL
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_AS_AUDIO
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_FROM_START
+import org.videolan.vlc.util.ContextOption.CTX_PLAY_FROM_START_AS_AUDIO
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_NEXT
 import org.videolan.vlc.util.ContextOption.CTX_REMOVE_GROUP
 import org.videolan.vlc.util.ContextOption.CTX_RENAME_GROUP
@@ -617,6 +618,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
             is MediaWrapper -> when (option) {
                 CTX_PLAY_FROM_START -> viewModel.playVideo(activity, media, position, fromStart = true)
                 CTX_PLAY_AS_AUDIO -> viewModel.playAudio(activity, media)
+                CTX_PLAY_FROM_START_AS_AUDIO -> viewModel.playVideo(activity, media, position, fromStart = true, forceAudio = true)
                 CTX_PLAY_ALL -> viewModel.playVideo(activity, media, position, forceAll = true)
                 CTX_PLAY -> viewModel.play(position)
                 CTX_INFORMATION -> showInfoDialog(media)
@@ -729,6 +731,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
                             if (item.isFavorite) add(CTX_FAV_REMOVE) else add(CTX_FAV_ADD)
                             if (item.seen > 0) add(CTX_MARK_AS_UNPLAYED) else add(CTX_MARK_AS_PLAYED)
                             if (item.time != 0L) add(CTX_PLAY_FROM_START)
+                            add(CTX_PLAY_FROM_START_AS_AUDIO)
                             if (viewModel.groupingType == VideoGroupingType.NAME || viewModel.group != null) {
                                 if (viewModel.group != null) add(CTX_REMOVE_GROUP) else addAll(CTX_ADD_GROUP, CTX_GROUP_SIMILAR)
                             }
