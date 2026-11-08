@@ -29,7 +29,7 @@ android {
 
     defaultConfig {
         applicationId rootProject.ext.appId
-        versionCode rootProject.ext.versionCode
+        versionCode (System.getenv('VLC_CI_VERSION_CODE') ? Integer.parseInt(System.getenv('VLC_CI_VERSION_CODE')) : rootProject.ext.versionCode)
         versionName rootProject.ext.versionName
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
@@ -93,6 +93,9 @@ android {
             matchingFallbacks = ['release']
         }
         debug {
+            if (System.getenv("VLC_CI_KEYSTORE_PATH")) {
+                signingConfig = signingConfigs.release
+            }
             applicationIdSuffix ".debug"
             jniDebuggable true
         }
