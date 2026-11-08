@@ -71,6 +71,7 @@ import org.videolan.vlc.util.ContextOption.CTX_PLAY
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_ALL
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_AS_AUDIO
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_FROM_START
+import org.videolan.vlc.util.ContextOption.CTX_PLAY_FROM_START_AS_AUDIO
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_NEXT
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_SHUFFLE
 import org.videolan.vlc.util.ContextOption.CTX_QUICK_PLAY
@@ -158,6 +159,7 @@ class ContextSheet : VLCBottomSheetDialogFragment() {
         if (flags.contains(CTX_PLAY_FROM_START)) add(Simple(CTX_PLAY_FROM_START, getString(R.string.play_from_start), R.drawable.ic_play_from_start))
         if (flags.contains(CTX_PLAY_ALL)) add(Simple(CTX_PLAY_ALL, getString(R.string.play_all), R.drawable.ic_play_all))
         if (flags.contains(CTX_PLAY_AS_AUDIO)) add(Simple(CTX_PLAY_AS_AUDIO, getString(R.string.play_as_audio), R.drawable.ic_play_as_audio))
+        if (flags.contains(CTX_PLAY_FROM_START_AS_AUDIO)) add(Simple(CTX_PLAY_FROM_START_AS_AUDIO, "Play from start as audio", R.drawable.ic_play_as_audio))
         if (flags.contains(CTX_APPEND)) add(Simple(CTX_APPEND, getString(R.string.append), R.drawable.ic_play_append))
         if (flags.contains(CTX_PLAY_NEXT)) add(Simple(CTX_PLAY_NEXT, getString(R.string.insert_next), R.drawable.ic_play_next))
         if (flags.contains(CTX_DOWNLOAD_SUBTITLES) && VlcMigrationHelper.isLolliPopOrLater) add(Simple(CTX_DOWNLOAD_SUBTITLES, getString(R.string.download_subtitles), R.drawable.ic_download_subtitles))
