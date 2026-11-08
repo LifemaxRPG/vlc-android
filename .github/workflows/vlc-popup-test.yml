@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/audio-to-popup-test
+      - feature/play-from-start-as-audio
 
 permissions:
   contents: read
